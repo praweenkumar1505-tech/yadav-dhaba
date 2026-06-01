@@ -1,0 +1,349 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+
+    <title>Yadav Dhaba</title>
+
+    <style>
+
+        body{
+            font-family: Arial;
+            background:#f5f5f5;
+            text-align:center;
+        }
+
+        .box{
+            width:450px;
+            margin:auto;
+            background:white;
+            padding:20px;
+            margin-top:40px;
+            border-radius:10px;
+            box-shadow:0 0 10px gray;
+        }
+
+        button{
+            padding:10px 20px;
+            background:green;
+            color:white;
+            border:none;
+            border-radius:5px;
+            cursor:pointer;
+        }
+
+        input{
+            padding:8px;
+            width:250px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="box">
+
+    <h1>Welcome to Yadav Dhaba 🍕</h1>
+
+    <form method="POST">
+
+        <input type="text"
+               name="customer_name"
+               placeholder="Enter Customer Name"
+               required>
+
+        <br><br>
+
+        <h2>Menu Card</h2>
+
+        {% for item, price in menu.items() %}
+
+            <input type="checkbox"
+                   name="items"
+                   value="{{item}}">
+
+            {{item}} - ₹{{price}}
+
+            <br><br>
+
+        {% endfor %}
+
+        <button type="submit">Add Order</button>
+
+    </form>
+
+    <br>
+
+    <h3>{{message|safe}}</h3>
+
+    <hr>
+
+    <h2>Customer Name: {{customer_name}}</h2>
+
+    <h2>Order History</h2>
+
+    {% for item in orders %}
+
+        <p>{{item}}</p>
+
+    {% endfor %}
+
+    <h1>Total Bill = ₹{{total_bill}}</h1>
+
+</div>
+
+</body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yadav Dhaba - Billing System</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #d32f2f;
+            text-align: center;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .menu-list {
+            list-style: none;
+            padding: 0;
+        }
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 16px;
+        }
+        .menu-item input {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+        /* Invoice Box Styling */
+        .invoice-box {
+            margin-top: 30px;
+            padding: 20px;
+            border: 2px dashed #999;
+            background: #fff;
+        }
+        .invoice-header {
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .invoice-header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #d32f2f;
+        }
+        .invoice-details {
+            margin-bottom: 15px;
+            font-size: 15px;
+        }
+        .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .invoice-table th, .invoice-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .invoice-table th {
+            background-color: #f9f9f9;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .total-row {
+            font-weight: bold;
+            font-size: 18px;
+            border-top: 2px solid #333;
+        }
+        .btn-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .print-btn {
+            background-color: #ff9800;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .print-btn:hover {
+            background-color: #e68a00;
+        }
+
+        /* --- PRINT MEDIA QUERY (Main Magic) --- */
+        @media print {
+            /* Hide everything except the invoice box */
+            body * {
+                visibility: hidden;
+            }
+            .invoice-box, .invoice-box * {
+                visibility: visible;
+            }
+            .invoice-box {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                border: none; /* Hide dashed border in print if preferred */
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Yadav Dhaba - Order Management 🍕</h2>
+    
+    <div class="form-group">
+        <label for="custName">Enter Customer Name:</label>
+        <input type="text" id="custName" value="Praween Kumar" oninput="updateInvoice()">
+    </div>
+
+    <h3>Select Items Menu Card</h3>
+    <ul class="menu-list">
+        <li class="menu-item">
+            <label><input type="checkbox" class="menu-checkbox" data-name="Pizza" data-price="40" onchange="updateInvoice()"> Pizza</label>
+            <span>₹40</span>
+        </li>
+        <li class="menu-item">
+            <label><input type="checkbox" class="menu-checkbox" data-name="Pasta" data-price="50" onchange="updateInvoice()"> Pasta</label>
+            <span>₹50</span>
+        </li>
+        <li class="menu-item">
+            <label><input type="checkbox" class="menu-checkbox" data-name="Burger" data-price="60" onchange="updateInvoice()"> Burger</label>
+            <span>₹60</span>
+        </li>
+        <li class="menu-item">
+            <label><input type="checkbox" class="menu-checkbox" data-name="Salad" data-price="70" onchange="updateInvoice()"> Salad</label>
+            <span>₹70</span>
+        </li>
+        <li class="menu-item">
+            <label><input type="checkbox" class="menu-checkbox" data-name="Coffee" data-price="80" onchange="updateInvoice()"> Coffee</label>
+            <span>₹80</span>
+        </li>
+    </ul>
+
+    <div class="invoice-box" id="billArea">
+        <div class="invoice-header">
+            <h1>Yadav Dhaba 🍕</h1>
+            <p>Tasty & Fresh Food</p>
+        </div>
+        <div class="invoice-details">
+            <p><strong>Customer Name:</strong> <span id="invCustomer">Praween Kumar</span></p>
+            <p><strong>Date:</strong> <span id="invDate"></span></p>
+        </div>
+        <table class="invoice-table">
+            <thead>
+                <tr>
+                    <th>Item Description</th>
+                    <th class="text-right">Price</th>
+                </tr>
+            </thead>
+            <tbody id="invoiceItems">
+                <tr><td colspan="2" style="text-align: center; color: #999;">No items selected yet</td></tr>
+            </tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td>Total Bill</td>
+                    <td class="text-right" id="invTotal">₹0</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="btn-container">
+        <button class="print-btn" onclick="window.print()">Print Invoice / Save as PDF</button>
+    </div>
+</div>
+
+<script>
+    // Set Current Date Automatically
+    const today = new Date();
+    document.getElementById('invDate').textContent = today.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    // Function to calculate bill dynamically
+    function updateInvoice() {
+        // 1. Update Customer Name
+        const nameInput = document.getElementById('custName').value;
+        document.getElementById('invCustomer').textContent = nameInput || "Guest Customer";
+
+        // 2. Process Selected Items
+        const checkboxes = document.querySelectorAll('.menu-checkbox');
+        const tableBody = document.getElementById('invoiceItems');
+        let total = 0;
+        let htmlContent = '';
+
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const name = checkbox.getAttribute('data-name');
+                const price = parseInt(checkbox.getAttribute('data-price'));
+                total += price;
+
+                htmlContent += `
+                    <tr>
+                        <td>${name}</td>
+                        <td class="text-right">₹${price}</td>
+                    </tr>
+                `;
+            }
+        });
+
+        // If no item selected
+        if (htmlContent === '') {
+            htmlContent = `<tr><td colspan="2" style="text-align: center; color: #999;">No items selected yet</td></tr>`;
+        }
+
+        tableBody.innerHTML = htmlContent;
+        document.getElementById('invTotal').textContent = '₹' + total;
+    }
+
+    // Run once on load to initialize if anything checked
+    updateInvoice();
+</script>
+
+</body>
+</html>
